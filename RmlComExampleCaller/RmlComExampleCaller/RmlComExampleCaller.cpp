@@ -8,12 +8,21 @@
 #include "Utilities.h"
 
 // A0C1C523-8307-4CD5-8566-180A55914EEC
-DEFINE_GUID(Cellphone_CLSID, 0xa0c1c523, 0x8307, 0x4cd5, 
+DEFINE_GUID(CLS_IDCellphone, 0xa0c1c523, 0x8307, 0x4cd5, 
       0x85, 0x66, 0x18, 0x0a, 0x55, 0x91, 0x4e, 0xec);
 
 // 08CED5FB-285D-4167-93CE-1E7376C35FD5
 DEFINE_GUID(IID_IDevice, 0x08ced5fb, 0x285d, 0x4167, 
       0x93, 0xce, 0x1e, 0x73, 0x76, 0xc3, 0x5f, 0xd5);
+
+// {10DC2A47-0351-460A-AF24-E77C81F854C3}
+DEFINE_GUID(IID_IComPropertyExample, 
+0x10dc2a47, 0x351, 0x460a, 0xaf, 0x24, 0xe7, 0x7c, 0x81, 0xf8, 0x54, 0xc3);
+
+// {E3BE29B9-5DE6-44DF-8EFC-E58821236996}
+DEFINE_GUID(CLSID_ComPropertyExample, 
+0xe3be29b9, 0x5de6, 0x44df, 0x8e, 0xfc, 0xe5, 0x88, 0x21, 0x23, 0x69, 0x96);
+
 
 void PrintCallErrorDetails(int hresult);
 
@@ -29,24 +38,30 @@ interface IDevice : IDispatch
     virtual __int32 __stdcall Test3(DeviceData* devicePointer) = 0;
 };
 
-bool InitializeCoCreateInstance(void** ppv)
+interface IComPropertyTest : IDispatch
 {
-	auto hresult = CoCreateInstance(Cellphone_CLSID, NULL, CLSCTX_INPROC_SERVER, IID_IDevice, ppv);
+    virtual __int32 __stdcall Test() = 0;
+    virtual __int32 __stdcall get_State(int* getValue) = 0;
+    virtual __int32 __stdcall set_State(int newValue) = 0;
+    virtual __int32 __stdcall Test2() = 0;
+};
+
+bool InitializeCoCreateInstanceCellphone(void** ppv)
+{
+	auto hresult = CoCreateInstance(CLS_IDCellphone, NULL, CLSCTX_INPROC_SERVER, IID_IDevice, ppv);
     if (hresult < 0) {
         std::cout << "CoCreateInstance failed with status 0x" << std::hex << hresult << std::endl;
-        CoUninitialize();
         return false;
     }
     return true;
 }
 
-bool InitializeCoGetClassObject(void** ppv)
+bool InitializeCoGetClassObjectCellphone(void** ppv)
 {
     LPVOID ppvTmp;
-    auto hresult = CoGetClassObject(Cellphone_CLSID, CLSCTX_INPROC_SERVER, NULL, IID_IClassFactory, &ppvTmp);
+    auto hresult = CoGetClassObject(CLS_IDCellphone, CLSCTX_INPROC_SERVER, NULL, IID_IClassFactory, &ppvTmp);
     if (hresult < 0) {
         std::cout << "CoGetClassObject failed with status 0x" << std::hex << hresult << std::endl;
-        CoUninitialize();
         return false;
     }
 
@@ -54,21 +69,18 @@ bool InitializeCoGetClassObject(void** ppv)
     hresult = ppvFactory->CreateInstance(NULL, IID_IDevice, &*ppv);
     if (hresult < 0) {
         std::cout << "IClassFactory::CreateInstance failed with status 0x" << std::hex << hresult << std::endl;
-        CoUninitialize();
         return false;
     }
 
     return true;
 }
 
-void ComTest()
+void ComIDeviceTest()
 {
-    CoInitialize(NULL);
-
     void* ppv = NULL;
 
     //if (!InitializeCoGetClassObject(&ppv))
-    if (!InitializeCoCreateInstance(&ppv))
+    if (!InitializeCoCreateInstanceCellphone(&ppv))
         return;
 
     IDevice* device = (IDevice*)ppv;
@@ -107,8 +119,79 @@ void ComTest()
     std::cout << std::endl;
 
     device->Release();
+}
 
-    CoUninitialize();
+
+bool InitializeCoCreateInstanceComPropertyTest(void** ppv)
+{
+	auto hresult = CoCreateInstance(CLSID_ComPropertyExample, NULL, CLSCTX_INPROC_SERVER, IID_IComPropertyExample, ppv);
+    if (hresult < 0) {
+        std::cout << "CoCreateInstance failed with status 0x" << std::hex << hresult << std::endl;
+        return false;
+    }
+    return true;
+}
+
+
+void ComIPropertyTest()
+{
+    void* ppv = NULL;
+
+    if (!InitializeCoCreateInstanceComPropertyTest(&ppv))
+        return;
+    IComPropertyTest* icpt1 = (IComPropertyTest*)ppv;
+
+    void* ppv2 = NULL;
+    if (!InitializeCoCreateInstanceComPropertyTest(&ppv2))
+    {
+        icpt1->Release();
+        return;
+    }
+    IComPropertyTest* icpt2 = (IComPropertyTest*)ppv2;
+
+    int a = 5, b = 4;
+
+    try {
+        auto hresult = icpt1->set_State(a);
+        std::cout << "Called icpt1->set_State: 0x" << std::hex << hresult << std::endl;
+        PrintCallErrorDetails(hresult);
+    }
+    catch (std::exception e) {
+        std::cout << "Call icpt1->set_State raised exception" << std::endl;
+    }
+    std::cout << std::endl;
+
+    try {
+        auto hresult = icpt2->set_State(b);
+        std::cout << "Called icpt2->set_State: 0x" << std::hex << hresult << std::endl;
+        PrintCallErrorDetails(hresult);
+    }
+    catch (std::exception e) {
+        std::cout << "Call icpt2->set_State raised exception" << std::endl;
+    }
+    std::cout << std::endl;
+
+    try {
+        int c = 0;
+        auto hresult = icpt1->get_State(&c);
+        std::cout << "Called icpt1->get_State(" << c << "): 0x" << std::hex << hresult << std::endl;
+        PrintCallErrorDetails(hresult);
+    }
+    catch (std::exception e) {
+        std::cout << "Call icpt1->get_State raised exception" << std::endl;
+    }
+    std::cout << std::endl;
+
+    try {
+        int c = 0;
+        auto hresult = icpt2->get_State(&c);
+        std::cout << "Called icpt2->get_State(" << c << "): 0x" << std::hex << hresult << std::endl;
+        PrintCallErrorDetails(hresult);
+    }
+    catch (std::exception e) {
+        std::cout << "Call icpt2->get_State raised exception" << std::endl;
+    }
+    std::cout << std::endl;
 }
 
 void PrintCallErrorDetails(int hresult)
@@ -143,25 +226,16 @@ int main()
     std::cout << "Press enter to test COM calls";
     getchar();
 
-    ComTest();
+    CoInitialize(NULL);
+
+    ComIDeviceTest();
+
+    ComIPropertyTest();
+
+    CoUninitialize();
 
     std::cout << "Press enter to exit" << std::endl;
-    //std::string dummy;
-    //std::cin >> dummy;
-    //if (std::cin.fail()) {
-    //    std::cout << "std::cin failed" << std::endl;
-    //}
     getchar();
     std::cout << "Exiting application" << std::endl;
 }
 
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file

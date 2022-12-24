@@ -80,6 +80,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Cellphone.cs" />
+    <Compile Include="ComPropertyTest\ComPropertyTest.cs" />
+    <Compile Include="ComPropertyTest\IComPropertyTest.cs" />
     <Compile Include="DeviceData.cs" />
     <Compile Include="IDevice.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
