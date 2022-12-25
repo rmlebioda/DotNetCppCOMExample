@@ -80,6 +80,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Cellphone.cs" />
+    <Compile Include="ComPartialInheritanceTest\IComInterface1.cs" />
+    <Compile Include="ComPartialInheritanceTest\IComInterface2.cs" />
+    <Compile Include="ComPartialInheritanceTest\IComPartial1.cs" />
+    <Compile Include="ComPartialInheritanceTest\IComPartial2.cs" />
+    <Compile Include="ComPartialInheritanceTest\IExampleInterface1.cs" />
+    <Compile Include="ComPartialInheritanceTest\IExampleInterface2.cs" />
+    <Compile Include="ComPartialInheritanceTest\PartialCom.cs" />
     <Compile Include="ComPropertyTest\ComPropertyTest.cs" />
     <Compile Include="ComPropertyTest\IComPropertyTest.cs" />
     <Compile Include="DeviceData.cs" />

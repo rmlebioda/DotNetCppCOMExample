@@ -23,6 +23,13 @@ DEFINE_GUID(IID_IComPropertyExample,
 DEFINE_GUID(CLSID_ComPropertyExample, 
 0xe3be29b9, 0x5de6, 0x44df, 0x8e, 0xfc, 0xe5, 0x88, 0x21, 0x23, 0x69, 0x96);
 
+// {CC626F08-7041-4A4F-AFF3-1FF977F3BDD5}
+DEFINE_GUID(IID_IPartialCom,
+0xcc626f08, 0x7041, 0x4a4f, 0xaf, 0xf3, 0x1f, 0xf9, 0x77, 0xf3, 0xbd, 0xd5);
+
+// {F3400CA1-8751-4EE2-A684-17630637E400}
+DEFINE_GUID(CLSID_PartialCom, 
+0xf3400ca1, 0x8751, 0x4ee2, 0xa6, 0x84, 0x17, 0x63, 0x6, 0x37, 0xe4, 0x0);
 
 void PrintCallErrorDetails(int hresult);
 
@@ -44,6 +51,20 @@ interface IComPropertyTest : IDispatch
     virtual __int32 __stdcall get_State(int* getValue) = 0;
     virtual __int32 __stdcall set_State(int newValue) = 0;
     virtual __int32 __stdcall Test2() = 0;
+};
+
+interface IPartialCom : IDispatch
+{
+    virtual __int32 __stdcall Test1() = 0;
+    virtual __int32 __stdcall Test2() = 0;
+    virtual __int32 __stdcall Test3() = 0;
+    virtual __int32 __stdcall Test4() = 0;
+    virtual __int32 __stdcall Test5() = 0;
+    virtual __int32 __stdcall Test6() = 0;
+    virtual __int32 __stdcall Test7() = 0;
+    virtual __int32 __stdcall Test8() = 0;
+    virtual __int32 __stdcall Test9() = 0;
+    virtual __int32 __stdcall Test10() = 0;
 };
 
 bool InitializeCoCreateInstanceCellphone(void** ppv)
@@ -69,9 +90,11 @@ bool InitializeCoGetClassObjectCellphone(void** ppv)
     hresult = ppvFactory->CreateInstance(NULL, IID_IDevice, &*ppv);
     if (hresult < 0) {
         std::cout << "IClassFactory::CreateInstance failed with status 0x" << std::hex << hresult << std::endl;
+        ppvFactory->Release();
         return false;
     }
 
+    ppvFactory->Release();
     return true;
 }
 
@@ -194,6 +217,64 @@ void ComIPropertyTest()
     std::cout << std::endl;
 }
 
+bool InitializeCoCreateInstancePartialCom(void** ppv)
+{
+	auto hresult = CoCreateInstance(CLSID_PartialCom, NULL, CLSCTX_INPROC_SERVER, IID_IPartialCom, ppv);
+    if (hresult < 0) {
+        std::cout << "CoCreateInstance failed with status 0x" << std::hex << hresult << std::endl;
+        return false;
+    }
+    return true;
+}
+
+void ComIPartialTest()
+{
+    void* ppv = NULL;
+
+    if (!InitializeCoCreateInstancePartialCom(&ppv))
+        return;
+    IPartialCom* iCom = (IPartialCom*)ppv;
+
+    try {
+        auto hresult = iCom->Test1();
+        std::cout << "Called iCom->Test1: 0x" << std::hex << hresult << std::endl;
+        PrintCallErrorDetails(hresult);
+    }
+    catch (std::exception e) {
+        std::cout << "Call iCom->Test1 raised exception" << std::endl;
+    }
+
+    try {
+        auto hresult = iCom->Test2();
+        std::cout << "Called iCom->Test2: 0x" << std::hex << hresult << std::endl;
+        PrintCallErrorDetails(hresult);
+    }
+    catch (std::exception e) {
+        std::cout << "Call iCom->Test2 raised exception" << std::endl;
+    }
+
+    try {
+        auto hresult = iCom->Test3();
+        std::cout << "Called iCom->Test3: 0x" << std::hex << hresult << std::endl;
+        PrintCallErrorDetails(hresult);
+    }
+    catch (std::exception e) {
+        std::cout << "Call iCom->Test3 raised exception" << std::endl;
+    }
+
+    // this will throw Access Violation Exception
+    //try {
+    //    auto hresult = iCom->Test4();
+    //    std::cout << "Called iCom->Test4: 0x" << std::hex << hresult << std::endl;
+    //    PrintCallErrorDetails(hresult);
+    //}
+    //catch (std::exception e) {
+    //    std::cout << "Call iCom->Test4 raised exception" << std::endl;
+    //}
+
+    iCom->Release();
+}
+
 void PrintCallErrorDetails(int hresult)
 {
     if (hresult >= 0) return;
@@ -231,6 +312,8 @@ int main()
     ComIDeviceTest();
 
     ComIPropertyTest();
+
+    ComIPartialTest();
 
     CoUninitialize();
 
